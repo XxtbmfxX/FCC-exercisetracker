@@ -90,8 +90,8 @@ router.post('/:_id/exercises', (req, res) => {
 
 // GET "api/users/:_id/logs" -> usuario completo
 router.get('/:_id/logs', (req, res) => {
-
-  User.findOne(filter)
+  const _id = req.body[":_id"]
+  User.findOne({_id : _id})
     .then(user => {
       if (!user) {
         console.log('User Not found');
