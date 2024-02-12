@@ -95,7 +95,10 @@ router.post('/:_id/exercises', (req, res) => {
 router.get('/:_id/logs', (req, res) => {
   const _id = req.params
 
-  User.findOne({ _id: _id })
+  const {from, to, limit} = req.query
+
+  if(!from || !to  || !limit){
+    User.findOne({ _id: _id })
     .then(user => {
       if (!user) {
         console.log('User Not found');
@@ -107,6 +110,31 @@ router.get('/:_id/logs', (req, res) => {
       console.error('Error al buscar usuario:', error);
       res.status(500).json({ error: "Error interno del servidor" });
     });
+  }
+  else if(limit){
+    User.findOne({ _id: _id })
+    .then(user => {
+      if (!user) {
+        console.log('User Not found');
+        return res.status(404).json({ error: "User Not found" });
+      }
+
+      let logs = user.log;
+      logs = logs.slice(0, parseInt(limit));
+      
+      user.log = logs
+
+      res.json(user);
+    })
+    .catch(error => {
+      console.error('Error al buscar usuario:', error);
+      res.status(500).json({ error: "Error interno del servidor" });
+    });
+
+  }
+
+  // No filters
+
 });
 
 // GET "api/users/:_id/logs"
