@@ -68,7 +68,11 @@ router.post('/:_id/exercises', (req, res) => {
                     console.log('Objeto log agregado con éxito:', updatedUser);
                     user.setCount()
 
-                    res.json(updatedUser)
+                    res.json({
+                      _id: updatedUser._id,
+                      "username": updatedUser.username,
+                      ...newLogObject
+                    })
                 })
                 .catch(error => {
                     console.error('Error al agregar objeto log:', error);
@@ -84,42 +88,17 @@ router.post('/:_id/exercises', (req, res) => {
 // -------------------- MODIFICAR ENDPOINTS -----------------------------------------
 
 
-// GET "api/users/:_id/logs"
+// GET "api/users/:_id/logs" -> usuario completo
 router.get('/:_id/logs', (req, res) => {
-  // Obtener el ID del usuario de los parámetros de la solicitud
-  const { _id } = req.params;
 
-  // Obtener los parámetros opcionales limit, from y to de la consulta
-  const { limit, from, to } = req.query;
-
-  // Crear un objeto de filtro con el ID del usuario
-  const filter = { _id };
-
-  // Si se proporciona el parámetro "from", agregarlo al filtro de fecha
-  if (from) {
-    filter['log.date'] = { $gte: new Date(from) };
-  }
-
-  // Si se proporciona el parámetro "to", agregarlo al filtro de fecha
-  if (to) {
-    filter['log.date'] = { ...filter['log.date'], $lte: new Date(to) };
-  }
-
-  // Buscar al usuario en la base de datos
   User.findOne(filter)
     .then(user => {
       if (!user) {
-        console.log('Usuario no encontrado');
-        return res.json({ error: "Usuario no encontrado" });
+        console.log('User Not found');
+        return res.status(404).json({ error: "User Not found" });
       }
 
-      // Si se proporciona el parámetro "limit", limitar el número de registros
-      let logs = user.log;
-      if (limit) {
-        logs = logs.slice(0, parseInt(limit));
-      }
-
-      res.json(logs);
+      res.json(user);
     })
     .catch(error => {
       console.error('Error al buscar usuario:', error);
