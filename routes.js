@@ -66,16 +66,17 @@ router.post('/:_id/exercises', (req, res) => {
       user.addToLog(newLogObject)
         .then(updatedUser => {
           console.log('Objeto log agregado con éxito:', updatedUser);
-          user.setCount()
+          updatedUser.setCount()
 
-          res.json({
-            _id: updatedUser._id,
+          const returnObject = {
+            _id: _id,
             username: updatedUser.username,
-            date: updatedUser.logs[updatedUser.logs.length -1].date,
-            duration: updatedUser.logs[updatedUser.logs.length -1].duration,
-            description: updatedUser.logs[updatedUser.logs.length -1].description
+            date: updatedUser.log[updatedUser.log.length - 1].date,
+            duration: updatedUser.log[updatedUser.log.length - 1].duration,
+            description: updatedUser.log[updatedUser.log.length - 1].description
+          }
 
-          })
+          res.json(returnObject)
         })
         .catch(error => {
           console.error('Error al agregar objeto log:', error);
@@ -95,41 +96,49 @@ router.post('/:_id/exercises', (req, res) => {
 router.get('/:_id/logs', (req, res) => {
   const _id = req.params
 
-  const {from, to, limit} = req.query
+  const { from, to, limit } = req.query
 
-  if(!from || !to  || !limit){
+  if (!from || !to || !limit) {
     User.findOne({ _id: _id })
-    .then(user => {
-      if (!user) {
-        console.log('User Not found');
-        return res.status(404).json({ error: "User Not found" });
-      }
-      res.json(user);
-    })
-    .catch(error => {
-      console.error('Error al buscar usuario:', error);
-      res.status(500).json({ error: "Error interno del servidor" });
-    });
+      .then(user => {
+        if (!user) {
+          console.log('User Not found');
+          return res.status(404).json({ error: "User Not found" });
+        }
+
+        const responseObject = {
+          _id: user._id,
+          username: user.username,
+          count: user.count,
+          log: user.log
+        }
+
+        res.json(responseObject);
+      })
+      .catch(error => {
+        console.error('Error al buscar usuario:', error);
+        res.status(500).json({ error: "Error interno del servidor" });
+      });
   }
-  else if(limit){
+  else if (limit) {
     User.findOne({ _id: _id })
-    .then(user => {
-      if (!user) {
-        console.log('User Not found');
-        return res.status(404).json({ error: "User Not found" });
-      }
+      .then(user => {
+        if (!user) {
+          console.log('User Not found');
+          return res.status(404).json({ error: "User Not found" });
+        }
 
-      let logs = user.log;
-      logs = logs.slice(0, parseInt(limit));
-      
-      user.log = logs
+        let logs = user.log;
+        logs = logs.slice(0, parseInt(limit));
 
-      res.json(user);
-    })
-    .catch(error => {
-      console.error('Error al buscar usuario:', error);
-      res.status(500).json({ error: "Error interno del servidor" });
-    });
+        user.log = logs
+
+        res.json(user);
+      })
+      .catch(error => {
+        console.error('Error al buscar usuario:', error);
+        res.status(500).json({ error: "Error interno del servidor" });
+      });
 
   }
 
