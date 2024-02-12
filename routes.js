@@ -2,6 +2,8 @@
 import express from 'express';
 import User from './dbSchemas.js';
 import { validarYConvertirFecha } from './utils.js';
+import mongoose from 'mongoose';
+
 
 const router = express.Router();
 
@@ -94,77 +96,53 @@ router.post('/:_id/exercises', (req, res) => {
 
 // GET "api/users/:_id/logs" -> usuario completo
 router.get('/:_id/logs', (req, res) => {
-  const _id = req.params
+  const { _id } = req.params;
+  const { from, to, limit } = req.query;
 
-  const { from, to, limit } = req.query
-
-  if (!from || !to || !limit) {
-    User.findOne({ _id: _id })
-      .then(user => {
-        if (!user) {
-          console.log('User Not found');
-          return res.status(404).json({ error: "User Not found" });
-        }
-
-        const responseObject = {
-          _id: user._id,
-          username: user.username,
-          count: user.count,
-          log: user.log
-        }
-
-        res.json(responseObject);
-      })
-      .catch(error => {
-        console.error('Error al buscar usuario:', error);
-        res.status(500).json({ error: "Error interno del servidor" });
-      });
-  }
-  else if (limit) {
-    User.findOne({ _id: _id })
-      .then(user => {
-        if (!user) {
-          console.log('User Not found');
-          return res.status(404).json({ error: "User Not found" });
-        }
-
-        let logs = user.log;
-        logs = logs.slice(0, parseInt(limit));
-
-        user.log = logs
-
-        res.json(user);
-      })
-      .catch(error => {
-        console.error('Error al buscar usuario:', error);
-        res.status(500).json({ error: "Error interno del servidor" });
-      });
-
+  // Validar el formato del _id
+  if (!mongoose.Types.ObjectId.isValid(_id)) {
+    return res.status(400).json({ error: "Invalid user ID" });
   }
 
-  // No filters
+  User.findOne({_id: _id})
+  .then(user => {
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
 
+     // Aplicar límite al array log si está presente
+     let logs = user.log;
+     if (limit) {
+       logs = logs.slice(0, parseInt(limit, 10));
+     }
+
+     //filtrar por dates en objetos del array log
+     if (from && to) {
+      const fromDate = new Date(from);
+      const toDate = new Date(to);
+      logs = logs.filter(log => {
+        const logDate = new Date(log.date); // Asumiendo que cada objeto de log tiene un campo 'date'
+        return logDate >= fromDate && logDate <= toDate;
+      });
+    }
+
+     const responseObject = {
+       _id: user._id,
+       username: user.username,
+       count: user.count,
+       log: logs
+     };
+
+     res.json(responseObject);
+  
+  })
+  .catch(error => {
+    console.error('Error al buscar usuario:', error);
+    res.status(500).json({ error: "Internal Server Error" });
+  });
 });
 
-// GET "api/users/:_id/logs"
-router.get('/testing_date/:_id', (req, res) => {
-  const { _id } = req.params
-  User.findOne({ _id: _id })
-    .then(user => {
-      if (!user) {
-        console.log('Usuario no encontrado');
-        return;
-      }
 
-      // Acceder al array de fechas en formato deseado
-      const formattedDates = user.formattedDate;
-      console.log('Fechas en formato deseado:', formattedDates);
-      res.send(formattedDates)
-    })
-    .catch(error => {
-      console.error('Error al buscar usuario:', error);
-    });
 
-});
 
 export default router;

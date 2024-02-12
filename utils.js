@@ -16,3 +16,19 @@ export const validarYConvertirFecha = (fechaString) => {
     // Devolver la fecha válida
     return fecha;
   }
+
+export const formatearFecha = (fechaOriginal) => {
+
+// Crear un objeto de fecha a partir de la cadena original
+const fecha = new Date(fechaOriginal);
+
+// Extraer el año, mes y día de la fecha
+const año = fecha.getFullYear();
+const mes = ("0" + (fecha.getMonth() + 1)).slice(-2); // Se agrega 1 porque los meses comienzan en 0
+const dia = ("0" + fecha.getDate()).slice(-2);
+
+// Formatear la fecha en la forma "yyyy-mm-dd"
+const fechaFormateada = `${año}-${mes}-${dia}`;
+
+return fechaFormateada
+}
